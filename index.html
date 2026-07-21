@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wochensicht — Entscheide der Zürcher Zivil- und Strafgerichte</title>
+<style>
+  :root{
+    --ink:#14181f;
+    --ink-soft:#5a6472;
+    --paper:#f6f7f9;
+    --card:#ffffff;
+    --line:#e2e6ec;
+    --zh:#1f4bb8;          /* Zürich-Blau */
+    --zh-dark:#16357f;
+    --zh-soft:#e8eefb;
+    --green:#1f7a46;
+    --green-soft:#e6f3ec;
+    --red:#b12331;
+    --red-soft:#fbe8ea;
+    --amber:#8a6410;
+    --amber-soft:#f6efd7;
+    --grey-soft:#edf0f4;
+    --mono:"SFMono-Regular",ui-monospace,"IBM Plex Mono",Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--paper);color:var(--ink);font-size:13.5px;line-height:1.5}
+  .wrap{max-width:1500px;margin:0 auto}
+
+  header{background:var(--card);border-bottom:3px solid var(--zh);padding:26px 22px 20px}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--zh);margin-bottom:6px}
+  h1{font-size:clamp(21px,3.2vw,31px);font-weight:700;letter-spacing:-.01em}
+  .lead{margin-top:8px;color:var(--ink-soft);max-width:70ch}
+  .meta{margin-top:10px;color:var(--ink-soft);font-size:12.5px;display:flex;gap:16px;flex-wrap:wrap}
+  .meta strong{color:var(--ink)}
+
+  .toolbar{position:sticky;top:0;z-index:20;background:var(--card);border-bottom:1px solid var(--line);padding:11px 22px}
+  .toolbar .wrap{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+  .toolbar input[type=search]{flex:1 1 240px;padding:9px 12px;border:1px solid var(--line);border-radius:6px;font-size:13.5px;font-family:var(--sans);background:var(--paper)}
+  .toolbar input[type=search]:focus,.toolbar select:focus{outline:2px solid var(--zh);outline-offset:1px;border-color:var(--zh)}
+  .toolbar select{padding:9px 10px;border:1px solid var(--line);border-radius:6px;font-size:12.5px;background:var(--paper);color:var(--ink);max-width:230px}
+  .count-chip{font-family:var(--mono);font-size:12px;background:var(--zh);color:#fff;padding:6px 12px;border-radius:999px;white-space:nowrap}
+  .reset-btn{padding:9px 13px;border:1px solid var(--line);background:var(--card);border-radius:6px;font-size:12.5px;cursor:pointer;color:var(--ink-soft)}
+  .reset-btn:hover{border-color:var(--zh);color:var(--zh)}
+
+  main{padding:18px 22px 50px}
+  .table-scroll{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:8px}
+  table{border-collapse:collapse;width:100%;min-width:1240px}
+  thead th{position:sticky;top:0;background:var(--card);text-align:left;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);padding:11px 12px;border-bottom:2px solid var(--ink);white-space:nowrap;cursor:pointer;user-select:none}
+  thead th:hover{color:var(--zh)}
+  thead th .arrow{font-family:var(--mono);margin-left:3px;color:var(--zh)}
+  tbody td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  tbody tr:hover{background:var(--paper)}
+  tbody tr:last-child td{border-bottom:none}
+
+  .nr a{font-family:var(--mono);font-size:12.5px;color:var(--zh);text-decoration:none;font-weight:600;white-space:nowrap}
+  .nr a:hover{text-decoration:underline}
+  .dim{color:var(--ink-soft)}
+  .betreff{max-width:280px;font-weight:500}
+  .gericht{max-width:170px}
+  .mitw{max-width:210px;font-size:12px;color:var(--ink-soft)}
+  .verweis{font-size:12px;color:var(--ink-soft);max-width:150px}
+  .verweis .bg{color:var(--zh);font-family:var(--mono)}
+
+  .tag{display:inline-block;font-size:11px;font-weight:600;padding:2px 7px;border-radius:4px;white-space:nowrap}
+  .t-zivil{background:var(--zh-soft);color:var(--zh-dark)}
+  .t-straf{background:var(--amber-soft);color:var(--amber)}
+  .art{font-size:12px;color:var(--ink-soft)}
+
+  .badge{display:inline-block;font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:4px;white-space:nowrap}
+  .b-abw{background:var(--green-soft);color:var(--green)}
+  .b-gut{background:var(--zh-soft);color:var(--zh-dark)}
+  .b-schuld{background:var(--red-soft);color:var(--red)}
+  .b-none{color:var(--ink-soft);font-size:12px}
+  .b-andere{background:var(--grey-soft);color:var(--ink-soft)}
+  .pruef{display:inline-block;font-size:10px;font-weight:700;padding:2px 6px;border-radius:999px;white-space:nowrap;margin-left:4px;vertical-align:middle}
+  .p-warn{background:var(--amber-soft);color:var(--amber)}
+  .konf{font-family:var(--mono);font-size:10.5px;color:var(--ink-soft)}
+
+  .empty{text-align:center;padding:44px 20px;color:var(--ink-soft)}
+  .note{background:var(--zh-soft);border:1px solid #cddaf6;border-radius:8px;padding:12px 15px;margin:0 22px 16px;font-size:12.5px;color:var(--zh-dark);max-width:1500px;margin-left:auto;margin-right:auto}
+  .note b{font-weight:700}
+  footer{padding:0 22px 40px;color:var(--ink-soft);font-size:12px;max-width:1500px;margin:0 auto}
+  footer a{color:var(--zh)}
+  @media (max-width:640px){header{padding:18px 14px 14px}.toolbar{padding:10px 14px}main{padding:12px 14px 36px}.note{margin:0 14px 14px}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="eyebrow">Gerichte des Kantons Zürich · Wochensicht</div>
+    <h1>Neuste Rechtsprechung der Zürcher Zivil- und Strafgerichte</h1>
+    <p class="lead">Automatisiert erfasste Liste der auf gerichte-zh.ch publizierten Entscheide von Obergericht, Handelsgericht, Arbeitsgericht und Bezirksgerichten.</p>
+    <div class="meta">
+      <span>Publikationsstand: <strong>15. Juli 2026</strong></span>
+      <span>Total: <strong id="total">–</strong> Entscheide</span>
+    </div>
+  </div>
+</header>
+
+<div class="toolbar">
+  <div class="wrap">
+    <input type="search" id="q" placeholder="Suchen: Geschäftsnummer, Betreff, Gericht, Mitwirkende, Verweis …" aria-label="Suche">
+    <select id="f-bereich" aria-label="Bereich"><option value="">Zivil &amp; Straf</option><option value="Zivil">nur Zivil</option><option value="Straf">nur Straf</option></select>
+    <select id="f-gericht" aria-label="Gericht filtern"><option value="">Alle Gerichte</option></select>
+    <select id="f-art" aria-label="Entscheidart filtern"><option value="">Alle Entscheidarten</option></select>
+    <button class="reset-btn" id="reset">Zurücksetzen</button>
+    <span class="count-chip" id="count"></span>
+  </div>
+</div>
+
+<div class="note">
+  Alle Angaben werden automatisch aus den Entscheid-PDFs ausgelesen. Das Zeichen <span class="pruef p-warn">⚠</span> beim Ergebnis bedeutet, dass die automatische Erkennung unsicher war — ein Blick ins verlinkte PDF lohnt sich dann. Ohne Gewähr für Richtigkeit und Vollständigkeit.
+</div>
+
+<main>
+  <div class="wrap">
+    <div class="table-scroll">
+      <table id="tbl">
+        <thead>
+          <tr>
+            <th data-k="pub">Publiziert</th>
+            <th data-k="gericht">Gericht</th>
+            <th data-k="kammer">Abteilung / Kammer</th>
+            <th data-k="art">Entscheidart</th>
+            <th data-k="datum">Entscheiddatum</th>
+            <th data-k="nr">Geschäftsnr.</th>
+            <th data-k="betreff">Betreffend</th>
+            <th data-k="verweis">Verweise</th>
+            <th data-k="mitw">Mitwirkend</th>
+            <th data-k="ergebnis">Ergebnis</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    Quelle der Entscheide: <a href="https://www.gerichte-zh.ch/entscheide/entscheide-neuheiten.html" target="_blank" rel="noopener">gerichte-zh.ch — Liste der Neuheiten</a>.
+    Diese Liste beruht auf automatisierter Erfassung öffentlich publizierter Entscheide und erhebt keinen Anspruch auf Richtigkeit oder Vollständigkeit. Prototyp im Layout von bger-update.ch.
+  </div>
+</footer>
+
+<script>
+const PDFBASE = "https://www.gerichte-zh.ch/fileadmin/user_upload/entscheide/oeffentlich/";
+
+// [betreff, entscheiddatum, geschäftsnr, gericht, kammer, entscheidart, verweis, pdf-datei]
+const RAW = [
+["Konkurseröffnung","16.06.2026","PS260190","Obergericht des Kantons Zürich","II. Zivilkammer","Urteil","Weiterzug ans Bundesgericht, 5A_572/2026","PS260190-O3.pdf"],
+["Pornografie","10.06.2026","GG260017","Bezirksgericht Dielsdorf","Strafsachen","Urteil","","GG260017-D1.pdf"],
+["Gegendarstellung","04.06.2026","HG260010","Handelsgericht des Kantons Zürich","–","Urteil","","HG260010-O4.pdf"],
+["Konkurs — Beschwerde gegen eine Verfügung des Konkursgerichtes des Bezirksgerichtes Uster vom 27. März 2026 (EK260198)","03.06.2026","PS260141","Obergericht des Kantons Zürich","II. Zivilkammer","Urteil","","PS260141-O1.pdf"],
+["Forderung","01.06.2026","LB250018","Obergericht des Kantons Zürich","I. Zivilkammer","Urteil","Weiterzug ans Bundesgericht, 4A_361/2026","LB250018-O12.pdf"],
+["Vorsorgliche Kontosperre und Pfändungsurkunde / Rechtsverweigerung","29.05.2026","PS260155","Obergericht des Kantons Zürich","II. Zivilkammer","Beschluss","Weiterzug ans Bundesgericht, 5A_583/2026","PS260155-O1.pdf"],
+["Arbeitsrechtliche Forderung","29.05.2026","AH250005","Bezirksgericht Meilen","Arbeitsgericht","Urteil","","AH250005-G3.pdf"],
+["Arbeitsrechtliche Forderung","29.05.2026","AN250003","Bezirksgericht Meilen","Arbeitsgericht","Beschluss","","AN250003-G4.pdf"],
+["Arbeitsrechtliche Forderung","27.05.2026","AH250007","Bezirksgericht Meilen","Arbeitsgericht","Urteil","","AH250007-G2.pdf"],
+["Organisationsmangel","26.05.2026","LF260047","Obergericht des Kantons Zürich","II. Zivilkammer","Urteil","","LF260047-O2.pdf"],
+["Konkurseröffnung","26.05.2026","PS260177","Obergericht des Kantons Zürich","II. Zivilkammer","Urteil","","PS260177-O2.pdf"],
+["Ungültigkeit, Nichtigkeit und Herabsetzung","18.05.2026","CP240002","Bezirksgericht Meilen","Abteilung","Beschluss","","CP240002-G10.pdf"],
+["Forderung","13.05.2026","FV260005","Bezirksgericht Meilen","Einzelgericht im vereinfachten Verfahren","Verfügung","","FV260005-G3.pdf"],
+["Kindesschutzmassnahmen (Kosten- und Entschädigungsfolgen)","12.05.2026","PQ260010","Obergericht des Kantons Zürich","II. Zivilkammer","Urteil","","PQ260010-O2.pdf"],
+["Kindesschutzmassnahmen","11.05.2026","PQ260024","Obergericht des Kantons Zürich","II. Zivilkammer","Urteil","","PQ260024-O2.pdf"],
+["Abweisung von Anträgen betr. Beistandschaft nach Art. 308 Abs. 2 ZGB","07.05.2026","PQ260026","Obergericht des Kantons Zürich","II. Zivilkammer","Urteil","Weiterzug ans Bundesgericht, 5A_521/2026","PQ260026-O1.pdf"],
+["Abweisung von Anträgen betr. Beistandschaft nach Art. 308 Abs. 2 ZGB","07.05.2026","PQ260031","Obergericht des Kantons Zürich","II. Zivilkammer","Urteil","","PQ260031-O1.pdf"],
+["Abweisung von Anträgen betr. Beistandschaft nach Art. 308 Abs. 2 ZGB","07.05.2026","PQ260033","Obergericht des Kantons Zürich","II. Zivilkammer","Beschluss","","PQ260033-O1.pdf"],
+["Ehescheidung (vorsorgliche Massnahmen)","05.05.2026","LY250025","Obergericht des Kantons Zürich","I. Zivilkammer","Beschluss","","LY250025-O15.pdf"],
+["Ehescheidung (vorsorgliche Massnahmen)","05.05.2026","LY250031","Obergericht des Kantons Zürich","I. Zivilkammer","Beschluss","","LY250031-O13.pdf"],
+["Arrest (Fristwiederherstellung)","29.04.2026","PS260125","Obergericht des Kantons Zürich","II. Zivilkammer","Beschluss","","PS260125-O1.pdf"],
+["Konkurseröffnung","29.04.2026","PS260134","Obergericht des Kantons Zürich","II. Zivilkammer","Urteil","","PS260134-O2.pdf"],
+["Schutz der Persönlichkeit","24.04.2026","CG260007","Bezirksgericht Bülach","II. Abteilung","Beschluss","","CG260007-C2.pdf"],
+["Forderung (Kostenfolge)","23.04.2026","RU260017","Obergericht des Kantons Zürich","I. Zivilkammer","Beschluss","","RU260017-O1.pdf"],
+["Eheschutz","22.04.2026","EE250013","Bezirksgericht Meilen","Einzelgericht im summarischen Verfahren","Urteil","","EE250013-G3.pdf"],
+["Forderung","13.04.2026","PD260008","Obergericht des Kantons Zürich","II. Zivilkammer","Beschluss","","PD260008-O1.pdf"],
+["Konkurseröffnung","13.04.2026","PS260118","Obergericht des Kantons Zürich","II. Zivilkammer","Urteil","","PS260118-O2.pdf"],
+["Rechtsöffnung","10.04.2026","RT260066","Obergericht des Kantons Zürich","I. Zivilkammer","Beschluss","","RT260066-O1.pdf"],
+["Forderung / Zeugnisänderung","09.04.2026","AH250019","Arbeitsgericht Zürich","1. Abteilung","Urteil","","AH250019-L2.pdf"],
+["Ehescheidung","07.04.2026","LC250032","Obergericht des Kantons Zürich","II. Zivilkammer","Urteil","","LC250032-O1.pdf"],
+["Organisationsmangel","07.04.2026","LF260024","Obergericht des Kantons Zürich","II. Zivilkammer","Urteil","","LF260024-O1.pdf"],
+["Aufsichtsbeschwerde","07.04.2026","VB250010","Obergericht des Kantons Zürich","Verwaltungskommission","Beschluss","","VB250010-O2.pdf"],
+["Anfechtung Zirkularbeschluss vom 06./07./09./16. Mai 2022","01.04.2026","LB250025","Obergericht des Kantons Zürich","II. Zivilkammer","Urteil","","LB250025-O4.pdf"],
+["Aufsichtsbeschwerde","01.04.2026","VB260007","Obergericht des Kantons Zürich","Verwaltungskommission","Beschluss","","VB260007-O2.pdf"],
+["Forderung / Zeugnis","28.03.2026","AN230034","Arbeitsgericht Zürich","3. Abteilung","Beschluss","","AN230034-L5.pdf"],
+["Konkurseröffnung","24.03.2026","PS260095","Obergericht des Kantons Zürich","II. Zivilkammer","Urteil","","PS260095-O3.pdf"],
+["Konkurseröffnung","19.03.2026","EK260469","Bezirksgericht Zürich","Konkursgericht","Urteil","","EK260469-L1.pdf"],
+["Forderung (Arbeitsrecht)","17.03.2026","AH250024","Bezirksgericht Horgen","Arbeitsgericht","Verfügung","","AH250024-F1.pdf"],
+["Überschuldungsanzeige","12.03.2026","EK260714","Bezirksgericht Zürich","Konkursgericht","Urteil","","EK260714-L1.pdf"],
+["Forderung (Arbeitsrecht)","11.03.2026","AH250003","Bezirksgericht Horgen","Arbeitsgericht","Verfügung","Weiterzug ans Obergericht, LA260022-O","AH250003-F8.pdf"],
+["Gerichtliche Beurteilung","11.03.2026","GC260001","Bezirksgericht Horgen","Einzelgericht","Verfügung","","GC260001-F2.pdf"],
+["Def. Eintragung eines gesetzlichen Pfandrechts nach Art. 712i ZGB (Nichtigkeit, Sistierung)","06.03.2026","RB260002","Obergericht des Kantons Zürich","I. Zivilkammer","Beschluss","","RB260002-O3.pdf"],
+["Def. Eintragung eines Pfandrechts nach Art. 712i ZGB (Nichtigkeit, Sistierung)","06.03.2026","RB260003","Obergericht des Kantons Zürich","I. Zivilkammer","Beschluss","","RB260003-O3.pdf"],
+["Ehescheidung (vorsorgliche Massnahmen)","05.03.2026","LY230048","Obergericht des Kantons Zürich","I. Zivilkammer","Urteil","","LY230048-O22.pdf"],
+["Umteilung","05.03.2026","VV260004","Obergericht des Kantons Zürich","Verwaltungskommission","Beschluss","","VV260004-O2.pdf"],
+["Umteilung","05.03.2026","VV260005","Obergericht des Kantons Zürich","Verwaltungskommission","Beschluss","","VV260005-O2.pdf"],
+["Forderung (Arbeitsrecht)","05.03.2026","AN250004","Bezirksgericht Horgen","Arbeitsgericht","Beschluss","","AN250004-F3.pdf"],
+["Ehescheidung","04.03.2026","FE260004","Bezirksgericht Horgen","Einzelgericht","Verfügung","","FE260004-F1.pdf"],
+["Verbrechen gegen das Betäubungsmittelgesetz (abgekürztes Verfahren)","03.03.2026","GG260004","Bezirksgericht Horgen","Einzelgericht","Urteil","","GG260004-F1.pdf"],
+["Vergehen gegen das AIG","02.03.2026","GG250047","Bezirksgericht Meilen","Einzelgericht in Strafsachen","Urteil","Weiterzug ans Obergericht, SB260309-O","GG250047-G3.pdf"],
+["Forderung","26.02.2026","CG250003","Bezirksgericht Horgen","I. Abteilung","Beschluss","","CG250003-F3.pdf"],
+["Forderung (Arbeitsrecht)","26.02.2026","AN250003","Bezirksgericht Horgen","Arbeitsgericht","Beschluss","","AN250003-F3.pdf"],
+["Konkursamtliche Liquidation der Erbschaft","25.02.2026","PS260042","Obergericht des Kantons Zürich","II. Zivilkammer","Urteil","","PS260042-O1.pdf"],
+["Kündigungsschutz / Anfechtung / Erstreckung / Forderung / Feststellungsklage (Sistierung)","25.02.2026","RU260009","Obergericht des Kantons Zürich","II. Zivilkammer","Urteil","","RU260009-O1.pdf"],
+["Ehescheidung","25.02.2026","FE260026","Bezirksgericht Bülach","Einzelgericht","Urteil","","FE260026-C2.pdf"],
+["Forderung","25.02.2026","FV260003","Bezirksgericht Horgen","Einzelgericht im vereinfachten Verfahren","Verfügung","","FV260003-F1.pdf"],
+["Abänderung des Scheidungsurteils","23.02.2026","LC260004","Obergericht des Kantons Zürich","II. Zivilkammer","Urteil","","LC260004-O1.pdf"],
+["Eheschutz","19.02.2026","EE250053","Bezirksgericht Horgen","Einzelgericht","Verfügung","","EE250053-F1.pdf"],
+["Nichtanhandnahme","17.02.2026","UE250304","Obergericht des Kantons Zürich","III. Strafkammer","Beschluss","","UE250304-O3.pdf"],
+["Eheschutz","16.02.2026","EE250078","Bezirksgericht Horgen","Einzelgericht","Verfügung","","EE250078-F1.pdf"],
+["Abänderung des Scheidungsurteils","13.02.2026","FP260003","Bezirksgericht Horgen","Einzelgericht","Urteil","","FP260003-F2.pdf"],
+["Ehescheidung","13.02.2026","FE250172","Bezirksgericht Horgen","Einzelgericht","Verfügung","","FE250172-F1.pdf"],
+["Ehescheidung","12.02.2026","FE250249","Bezirksgericht Horgen","Einzelgericht","Urteil","","FE250249-F1.pdf"],
+["Abänderung des Scheidungsurteils","11.02.2026","FP240017","Bezirksgericht Horgen","Einzelgericht","Urteil","","FP240017-F5.pdf"],
+["Eheschutz","09.02.2026","EE260002","Bezirksgericht Horgen","Einzelgericht","Verfügung","","EE260002-F1.pdf"],
+["Ehescheidung","06.02.2026","FE250262","Bezirksgericht Horgen","Einzelgericht","Urteil","","FE250262-F1.pdf"],
+["Forderung / Zeugnisänderung","06.02.2026","AH250053","Arbeitsgericht Zürich","4. Abteilung","Urteil","Weiterzug ans Obergericht, LA260015-O","AH250053-L3.pdf"],
+["Freiheitsberaubung und Entführung etc.","05.02.2026","DG250022","Bezirksgericht Uster","Strafgericht","Urteil","Weiterzug ans Obergericht, SB260239-O","DG250022-I9.pdf"],
+["Einsprache gegen Strafbefehl","02.02.2026","GB250038","Bezirksgericht Dielsdorf","Strafsachen","Urteil","","GB250038-D2.pdf"],
+["Ehescheidung","02.02.2026","FE250221","Bezirksgericht Horgen","Einzelgericht","Urteil","","FE250221-F1.pdf"],
+["Eheschutz","02.02.2026","EE250072","Bezirksgericht Horgen","Einzelgericht","Verfügung","","EE250072-F1.pdf"],
+["Forderung","27.01.2026","AH250111","Arbeitsgericht Zürich","4. Abteilung","Urteil","","AH250111-L1.pdf"],
+["Anfechtung der Vaterschaft","20.01.2026","FK250025","Bezirksgericht Horgen","Einzelgericht im vereinfachten Verfahren","Urteil","","FK250025-F1.pdf"],
+["Vaterschaft und Unterhalt","19.01.2026","FK240004","Bezirksgericht Horgen","Einzelgericht im vereinfachten Verfahren","Urteil","","FK240004-F8.pdf"],
+["Anfechtung von Testamenten","12.01.2026","CP240001","Bezirksgericht Horgen","I. Abteilung","Beschluss","","CP240001-F4.pdf"],
+["Verbrechen gegen das Betäubungsmittelgesetz","08.01.2026","DH250040","Bezirksgericht Winterthur","–","Urteil","","DH250040-K1.pdf"],
+["Feststellung des Nichtbestehens einer Schuld (Art. 85a SchKG)","07.01.2026","FV240146","Bezirksgericht Zürich","Einzelgericht für SchKG-Klagen","Urteil","Weiterzug ans Bundesgericht, 5D_12/2026","FV240146-L12.pdf"],
+["Nachbarrecht / Baum-Rückschnitt","05.01.2026","FV230114","Bezirksgericht Zürich","8. Abteilung","Urteil","Weiterzug ans Obergericht, NP260007-O","FV230114-L9.pdf"],
+["Ehescheidung","22.12.2025","FE250183","Bezirksgericht Horgen","Einzelgericht","Urteil","","FE250183-F4.pdf"],
+["Abänderung Unterhalt","19.12.2025","FK240028","Bezirksgericht Dielsdorf","Einzelgericht im vereinfachten Verfahren","Urteil","","FK240028-D3.pdf"],
+["Schändung","17.12.2025","SB250114","Obergericht des Kantons Zürich","I. Strafkammer","Urteil","","SB250114-O1.pdf"],
+["Nichtanhandnahme","17.12.2025","UE250316","Obergericht des Kantons Zürich","III. Strafkammer","Beschluss","","UE250316-O4.pdf"],
+["Eheschutzmassnahmen","17.12.2025","EE250022","Bezirksgericht Hinwil","Einzelgericht im summarischen Verfahren","Urteil","","EE250022-E5.pdf"],
+["Eheschutz","10.12.2025","EE240048","Bezirksgericht Dielsdorf","Einzelgericht s.V.","Urteil","Weiterzug ans Obergericht, LE260011-O","EE240048-D3.pdf"],
+["Forderung","08.12.2025","CG230015","Bezirksgericht Uster","Zivilgericht","Beschluss","Weiterzug ans Obergericht, LB260016-O","CG230015-I11.pdf"],
+["Fahrlässige Körperverletzung etc.","03.12.2025","GG250023","Bezirksgericht Dielsdorf","Strafsachen","Urteil","","GG250023-D6.pdf"],
+["Forderung","03.11.2025","FV240009","Bezirksgericht Pfäffikon","Einzelgericht im vereinfachten Verfahren","Urteil","","FV240009-H2.pdf"],
+["Herausgabe / Herabsetzung","16.10.2025","CP180005","Bezirksgericht Hinwil","–","Urteil","Weiterzug ans Obergericht, LB250063-O","CP180005-E20.pdf"],
+["Qualifizierte Widerhandlung gegen das Betäubungsmittelgesetz","15.10.2025","SB250011","Obergericht des Kantons Zürich","II. Strafkammer","Urteil","Weiterzug ans Bundesgericht, 6B_250011","SB250011-O1.pdf"],
+["Ehescheidung","14.10.2025","LC250027","Obergericht des Kantons Zürich","II. Zivilkammer","Beschluss","","LC250027-O1.pdf"],
+["Forderung","22.09.2025","CG230007","Bezirksgericht Dielsdorf","I. Abteilung","Urteil","Weiterzug ans Obergericht, LB250059-O","CG230007-D9.pdf"],
+["Forderung","18.09.2025","FV250006","Bezirksgericht Hinwil","Einzelgericht im vereinfachten Verfahren","Urteil","","FV250006-E4.pdf"],
+["Raub etc.","09.09.2025","GG250020","Bezirksgericht Hinwil","Einzelgericht in Zivil- und Strafsachen","Urteil","Weiterzug ans Obergericht, SB260107-O","GG250020-E4.pdf"],
+["Forderung etc.","05.09.2025","AH250003","Bezirksgericht Hinwil","Arbeitsgericht","Urteil","","AH250003-E1.pdf"],
+["Sexuelle Handlungen mit Kindern etc.","02.09.2025","GG250017","Bezirksgericht Dielsdorf","Strafsachen","Urteil","Weiterzug ans Obergericht, SB260042-O","GG250017-D5.pdf"],
+["Einsprache gegen Strafbefehl","26.08.2025","GB250013","Bezirksgericht Dielsdorf","Strafsachen","Urteil","Weiterzug ans Bundesgericht, 7B_450/2026","GB250013-D4.pdf"],
+["Wucher etc.","18.08.2025","DG250002","Bezirksgericht Meilen","Abteilung","Urteil","Weiterzug ans Obergericht, SB260017-O","DG250002-G4.pdf"],
+["Ehescheidung (Art. 114 ZGB)","05.08.2025","FE160182","Bezirksgericht Meilen","Einzelgericht im ordentlichen Verfahren","Urteil","Weiterzug ans Obergericht, LC250026-O","FE160182-G15.pdf"],
+["Ehescheidung","22.07.2025","FE250068","Bezirksgericht Horgen","Einzelgericht","Urteil","Weiterzug ans Obergericht, PC250047-O","FE250068-F1.pdf"],
+["Widerhandlung gegen das Betäubungsmittelgesetz","01.07.2025","DG240021","Bezirksgericht Hinwil","–","Urteil","Weiterzug ans Obergericht, SB260101-O","DG240021-E7.pdf"],
+["Grobe Verletzung der Verkehrsregeln / Einsprache gegen Strafbefehl","27.06.2025","GB250035","Bezirksgericht Zürich","10. Abteilung","Urteil","Weiterzug ans Obergericht, SB250476-O","GB250035-L1.pdf"],
+["Durchsetzungsklage / Nachlass","27.06.2025","FV250012","Bezirksgericht Zürich","10. Abteilung","Urteil","Weiterzug ans Bundesgericht, 5D_14/2026","FV250012-L5.pdf"],
+["Übertretung der Prostitutionsgewerbeverordnung","18.06.2025","GC240143","Bezirksgericht Zürich","10. Abteilung","Urteil","Weiterzug ans Obergericht, SU250030-O","GC240143-L1.pdf"],
+["Grobe Verletzung der Verkehrsregeln / Einsprache gegen Strafbefehl","03.06.2025","GB250038","Bezirksgericht Zürich","10. Abteilung","Urteil","","GB250038-L1.pdf"],
+["Ehescheidung","02.06.2025","FE240576","Bezirksgericht Zürich","7. Abteilung","Urteil","","FE240576-L1.pdf"],
+["Betrug (Covid-19), Urkundenfälschung und ordnungswidrige Führung der Geschäftsbücher","22.05.2025","GG250002","Bezirksgericht Meilen","Einzelgericht in Strafsachen","Urteil","Weiterzug ans Obergericht, SB250346-O","GG250002-G4.pdf"],
+["(Abänderung) Unterhalt, Obhut und Betreuungsanteile","22.05.2025","FK220142","Bezirksgericht Zürich","1. Abteilung","Urteil","Weiterzug ans Obergericht, LZ250033-O","FK220142-L16.pdf"],
+["Diebstahl etc.","25.04.2025","GG240094","Bezirksgericht Winterthur","Einzelgericht Strafsachen","Urteil","Weiterzug ans Obergericht, SB250406-O","GG240094-K4.pdf"],
+["Beschimpfung etc.","22.04.2025","GG240109","Bezirksgericht Bülach","Einzelgericht","Urteil","Weiterzug ans Obergericht, SB250488-O","GG240109-C6.pdf"],
+["Vorsätzliche Tötung (Versuch) etc.","10.04.2025","DG250017","Bezirksgericht Zürich","3. Abteilung","Urteil","Weiterzug ans Obergericht, SB250326-O","DG250017-L2.pdf"],
+["Forderung","08.04.2025","FV240058","Bezirksgericht Zürich","3. Abteilung","Urteil","","FV240058-L4.pdf"],
+["Fahrlässige Körperverletzung etc.","24.03.2025","GG240084","Bezirksgericht Winterthur","Einzelgericht Strafsachen","Urteil","Weiterzug ans Obergericht, SB250293-O","GG240084-K4.pdf"],
+["Rechtswidrige Einreise / Einsprache gegen Strafbefehl","07.03.2025","GB250020","Bezirksgericht Zürich","10. Abteilung","Urteil","Weiterzug ans Obergericht, SB250188-O","GB250020-L1.pdf"],
+["Drohung etc.","24.02.2025","GG240263","Bezirksgericht Zürich","10. Abteilung","Urteil","Weiterzug ans Obergericht, SB250361-O","GG240263-L4.pdf"],
+["Nachbarrecht","20.02.2025","FV240105","Bezirksgericht Zürich","6. Abteilung","Urteil","","FV240105-L2.pdf"],
+["Übertretung von Verkehrsvorschriften","19.02.2025","GC240119","Bezirksgericht Zürich","10. Abteilung","Urteil","","GC240119-L1.pdf"],
+["Sexuelle Handlung mit einem Kind etc.","18.02.2025","DG240050","Bezirksgericht Bülach","II. Abteilung","Urteil","Weiterzug ans Obergericht, SB250214-O","DG240050-C5.pdf"],
+["Üble Nachrede etc. / Einsprache gegen Strafbefehl","21.01.2025","GB240029","Bezirksgericht Zürich","10. Abteilung","Urteil","Weiterzug ans Obergericht, SB250196-O","GB240029-L2.pdf"],
+["Fahren in fahrunfähigem Zustand etc. / Einsprache gegen Strafbefehl","13.01.2025","GB240081","Bezirksgericht Zürich","10. Abteilung","Urteil","Weiterzug ans Obergericht, SB250208-O","GB240081-L1.pdf"],
+["Forderung","10.01.2025","FV230059","Bezirksgericht Zürich","2. Abteilung","Urteil","Weiterzug ans Bundesgericht, 5D_38/2025","FV230059-L4.pdf"],
+["Versuchte vorsätzliche Tötung","15.12.2020","DG200020","Bezirksgericht Dietikon","–","Urteil","Weiterzug ans Obergericht, SB210245-O","DG200020-M3.pdf"]
+];
+
+// Aus PDF ausgewertete Zusatzangaben (Publiziert / Mitwirkend / Ergebnis) – Beispiel-Datensätze.
+// status: "geprüft" = von Hand bestätigt, "auto" = automatisch (hohe Konfidenz), "zu_prüfen" = unsicher
+const PDFDATA = {
+ "PS260190":{pub:"07.07.2026", mitw:"ORi Bantli Keller (Vors.), ORi Strähl, OR Pahud; GS Tolic Hamming", erg:"Abweisung", status:"geprüft", konf:1.0, quelle:"manuell"},
+ "PS260141":{pub:"", mitw:"ORi Bantli Keller (Vors.), ORi Strähl, OR Pahud; GS Bohli Roth", erg:"Abweisung", status:"auto", konf:0.9, quelle:"regel"},
+ "GG260017":{pub:"", mitw:"BezRi Baeckert; GS de Meurichy", erg:"Schuldspruch", status:"geprüft", konf:1.0, quelle:"manuell"},
+ "HG260010":{pub:"", mitw:"OR Mazan (VP), OR Schwander, HR Hagger, HR Senn, HR Vogler; GS Kiener", erg:"Abweisung", status:"geprüft", konf:1.0, quelle:"manuell"}
+};
+
+// Straf-Präfixe der Geschäftsnummer
+const STRAF = ["GG","GB","GC","DG","DH","SB","SU","UE"];
+
+// Einheitliches Datenmodell – gespeist entweder aus data.json (Pipeline) oder den Beispieldaten.
+function baueAusRaw(){
+  return RAW.map(r=>{
+    const nr = r[2];
+    const pfx = nr.replace(/[0-9].*$/,"").slice(0,2);
+    const bereich = STRAF.includes(pfx) ? "Straf" : "Zivil";
+    const x = PDFDATA[nr] || {};
+    return {
+      betreff:r[0], datum:r[1], nr, gericht:r[3], kammer:r[4], art:r[5], verweis:r[6], pdf:r[7],
+      bereich, pub:x.pub||"", mitw:x.mitw||"", erg:x.erg||"",
+      status:x.status||"zu_prüfen", konf:(x.konf!=null?x.konf:null), quelle:x.quelle||""
+    };
+  });
+}
+// Mapping von den Pipeline-Feldnamen (data.json) auf die Anzeige-Felder.
+function ausJson(e){
+  const nr = e.nr||"";
+  const pfx = nr.replace(/[0-9].*$/,"").slice(0,2);
+  return {
+    betreff:e.betreff||"", datum:e.entscheiddatum||e.datum||"", nr,
+    gericht:e.gericht||"", kammer:e.kammer||"", art:e.art||"", verweis:e.verweis||"", pdf:e.pdf||"",
+    bereich:e.bereich||(STRAF.includes(pfx)?"Straf":"Zivil"),
+    pub:e.publiziert||"", mitw:e.mitwirkend||"", erg:e.ergebnis||"",
+    status:e.status||"zu_prüfen", konf:(e.konfidenz!=null?e.konfidenz:null), quelle:e.quelle||""
+  };
+}
+
+let DATA = baueAusRaw();   // Startwert; wird bei Bedarf durch data.json ersetzt
+
+const $ = s => document.querySelector(s);
+const tbody = $("#tbody");
+let sortKey = "datum", sortDir = -1;
+
+const toISO = d => { const [dd,mm,yy]=d.split("."); return yy+mm+dd; };
+const fmt = d => {
+  if(!d) return "";
+  const [dd,mm,yy]=d.split("."); const mon=["Jan.","Feb.","März","Apr.","Mai","Juni","Juli","Aug.","Sep.","Okt.","Nov.","Dez."][+mm-1];
+  return `${+dd}. ${mon} ${yy}`;
+};
+const badge = d => {
+  const e = d.erg;
+  if(!e) return `<span class="b-none">—</span>`;
+  let cls = "b-andere";
+  if(/gutheissung|aufhebung|rückweisung/i.test(e)) cls="b-gut";
+  else if(/abweisung|nichteintreten|gegenstandslos|freispruch/i.test(e)) cls="b-abw";
+  else if(/schuld|verurteil/i.test(e)) cls="b-schuld";
+  const warn = (d.status==="zu_prüfen") ? ` <span class="pruef p-warn" title="automatische Erkennung unsicher">⚠</span>` : "";
+  const konf = (d.konf!=null) ? `<div class="konf">Konfidenz ${d.konf}</div>` : "";
+  return `<span class="badge ${cls}">${e}</span>${warn}${konf}`;
+};
+const verweisHtml = v => {
+  if(!v) return "";
+  return v.replace(/(\d[A-Z]?_?\d+[/.]\d+|[A-Z]{2}\d+-O)/g,'<span class="bg">$1</span>');
+};
+
+function fillSelect(id, values){
+  const sel=$(id);
+  [...new Set(values)].sort((a,b)=>a.localeCompare(b,"de")).forEach(v=>{
+    const o=document.createElement("option"); o.value=v; o.textContent=v; sel.appendChild(o);
+  });
+}
+fillSelect("#f-gericht", DATA.map(d=>d.gericht));
+fillSelect("#f-art", DATA.map(d=>d.art));
+$("#total").textContent = DATA.length;
+
+function currentRows(){
+  const q=$("#q").value.trim().toLowerCase();
+  const b=$("#f-bereich").value, g=$("#f-gericht").value, a=$("#f-art").value;
+  let rows = DATA.filter(d=>{
+    if(b && d.bereich!==b) return false;
+    if(g && d.gericht!==g) return false;
+    if(a && d.art!==a) return false;
+    if(q){
+      const hay=`${d.nr} ${d.betreff} ${d.gericht} ${d.kammer} ${d.mitw} ${d.verweis} ${d.erg}`.toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  rows.sort((x,y)=>{
+    let vx,vy;
+    if(sortKey==="datum"||sortKey==="pub"){ vx=toISO(x[sortKey]||"01.01.1900"); vy=toISO(y[sortKey]||"01.01.1900"); }
+    else { vx=String(x[sortKey]); vy=String(y[sortKey]); }
+    return vx.localeCompare(vy,"de")*sortDir;
+  });
+  return rows;
+}
+
+function render(){
+  const rows=currentRows();
+  $("#count").textContent=`${rows.length} Entscheide`;
+  if(!rows.length){ tbody.innerHTML=`<tr><td colspan="10" class="empty">Keine Entscheide gefunden. Filter anpassen oder zurücksetzen.</td></tr>`; return; }
+  tbody.innerHTML=rows.map(d=>`
+    <tr>
+      <td class="dim">${d.pub?fmt(d.pub):'<span class="b-none">—</span>'}</td>
+      <td class="gericht">${d.gericht}</td>
+      <td class="dim">${d.kammer}</td>
+      <td><span class="tag ${d.bereich==='Straf'?'t-straf':'t-zivil'}">${d.bereich}</span> <span class="art">${d.art}</span></td>
+      <td class="dim">${fmt(d.datum)}</td>
+      <td class="nr"><a href="${PDFBASE}${d.pdf}" target="_blank" rel="noopener">${d.nr}</a></td>
+      <td class="betreff">${d.betreff}</td>
+      <td class="verweis">${verweisHtml(d.verweis)}</td>
+      <td class="mitw">${d.mitw||'<span class="b-none">—</span>'}</td>
+      <td>${badge(d)}</td>
+    </tr>`).join("");
+  document.querySelectorAll("thead th").forEach(th=>{
+    th.innerHTML=th.textContent.replace(/[▲▼]/g,"").trim();
+    if(th.dataset.k===sortKey) th.innerHTML+=`<span class="arrow">${sortDir===1?"▲":"▼"}</span>`;
+  });
+}
+
+["#q","#f-bereich","#f-gericht","#f-art"].forEach(id=>$(id).addEventListener("input",render));
+$("#reset").addEventListener("click",()=>{ $("#q").value="";$("#f-bereich").value="";$("#f-gericht").value="";$("#f-art").value="";sortKey="datum";sortDir=-1;render(); });
+document.querySelectorAll("thead th").forEach(th=>th.addEventListener("click",()=>{
+  const k=th.dataset.k;
+  if(sortKey===k) sortDir*=-1; else { sortKey=k; sortDir=1; }
+  render();
+}));
+
+// Beim Öffnen: falls die Pipeline eine data.json erzeugt hat, diese laden.
+function refreshFilters(){
+  ["#f-gericht","#f-art"].forEach(id=>{ const s=$(id); while(s.options.length>1) s.remove(1); });
+  fillSelect("#f-gericht", DATA.map(d=>d.gericht));
+  fillSelect("#f-art", DATA.map(d=>d.art));
+  $("#total").textContent = DATA.length;
+}
+fetch("data.json").then(r=> r.ok ? r.json() : Promise.reject())
+  .then(j=>{ if(j&&j.entscheide&&j.entscheide.length){ DATA = j.entscheide.map(ausJson); if(j.stand) document.querySelectorAll('.meta strong')[0].textContent=j.stand; refreshFilters(); } render(); })
+  .catch(()=> render());
+</script>
+</body>
+</html>
