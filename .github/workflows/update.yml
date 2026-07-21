@@ -1,0 +1,41 @@
+# Datei ablegen unter:  .github/workflows/update.yml
+# Bewirkt: jede Woche (Mo 06:00 MEZ) automatisch neue Entscheide holen, auswerten,
+# data.json committen und die Seite über GitHub Pages veröffentlichen.
+
+name: Wochensicht aktualisieren
+
+on:
+  schedule:
+    # Entscheide werden mittwochs publiziert. Lauf mittwochs 22:00 UTC
+    # = 23:00 (Winter) bzw. 00:00 (Sommer) Schweizer Zeit -> Nacht auf Donnerstag.
+    - cron: "0 22 * * 3"
+  workflow_dispatch: {}       # erlaubt manuelles Auslösen per Knopf
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Abhängigkeiten installieren
+        run: pip install requests beautifulsoup4 pdfplumber anthropic
+
+      - name: Daten aktualisieren
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}   # in den Repo-Secrets hinterlegen
+        run: python pipeline.py        # ohne ID -> neueste Woche wird automatisch erkannt
+
+      - name: Änderungen committen
+        run: |
+          git config user.name "wochensicht-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add data.json review_queue.csv lernbeispiele.json
+          git commit -m "Automatische Aktualisierung $(date +%F)" || echo "keine Änderungen"
+          git push
