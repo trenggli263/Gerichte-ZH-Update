@@ -30,7 +30,7 @@ jobs:
       - name: Daten aktualisieren
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}   # in den Repo-Secrets hinterlegen
-        run: python pipeline.py --wochen 15       # ohne ID -> neueste Woche wird automatisch erkannt
+        run: python pipeline.py       # ohne ID -> neueste Woche wird automatisch erkannt
 
       - name: Änderungen committen
         run: |
