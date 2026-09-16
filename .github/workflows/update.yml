@@ -8,9 +8,8 @@ on:
   schedule:
     # Entscheide werden mittwochs publiziert. Lauf mittwochs 22:00 UTC
     # = 23:00 (Winter) bzw. 00:00 (Sommer) Schweizer Zeit -> Nacht auf Donnerstag.
-    - cron: "0 5 * * 3"
-    - cron: "0 7 * * 3"
-  workflow_dispatch: {}       # erlaubt manuelles Auslösen per Knopf
+    - cron: "0 8 * * 3"
+    - workflow_dispatch: {}       # erlaubt manuelles Auslösen per Knopf
 
 permissions:
   contents: write
